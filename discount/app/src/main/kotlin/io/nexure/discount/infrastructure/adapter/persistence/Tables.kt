@@ -17,12 +17,8 @@ object ProductTable : Table("products") {
 }
 
 object DiscountTable : Table("discounts") {
-    val id = varchar("id", 255)
     val productId = varchar("product_id", 255).references(ProductTable.id)
     val discountId = varchar("discount_id", 255)
     val percent = double("percent")
-    override val primaryKey = PrimaryKey(id)
-    init {
-        uniqueIndex(productId, discountId)
-    }
+    override val primaryKey = PrimaryKey(productId, discountId)
 }
