@@ -18,8 +18,6 @@ import io.nexure.discount.infrastructure.config.DatabaseConfig
 import io.nexure.discount.infrastructure.config.DependencyConfig
 import org.slf4j.LoggerFactory
 
-const val DISCOUNT_ENDPOINT = "/discount"
-
 fun main() {
     val logger = LoggerFactory.getLogger("Application")
     val config = ConfigFactory.load()

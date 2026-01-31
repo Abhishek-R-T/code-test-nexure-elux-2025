@@ -30,7 +30,8 @@ class ProductRepositoryImpl : ProductRepository {
                 it[percent] = discount.percent
             }
         } catch (e: ExposedSQLException) {
-            if (e.message?.contains("duplicate key") == true) {
+            val message = e.message?.lowercase() ?: ""
+            if (message.contains("duplicate key") || message.contains("unique") || message.contains("constraint")) {
                 logger.debug("Discount ${discount.discountId} already applied to product $productId")
                 return@newSuspendedTransaction null
             } else {
@@ -41,8 +42,7 @@ class ProductRepositoryImpl : ProductRepository {
     }
 
     private fun fetchProduct(id: String): Product? {
-        val productRow = ProductTable.selectAll().where { ProductTable.id eq id }.singleOrNull()
-            ?: return null
+        val productRow = ProductTable.selectAll().where { ProductTable.id eq id }.singleOrNull() ?: return null
 
         val countryName = productRow[ProductTable.country]
         val countryRow = CountryTable.selectAll().where { CountryTable.name eq countryName }.single()

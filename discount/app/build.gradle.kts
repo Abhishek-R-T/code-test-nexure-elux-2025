@@ -14,6 +14,7 @@ dependencies {
     implementation(libs.bundles.ktor.client)
     implementation(libs.bundles.database)
     testImplementation(libs.bundles.ktor.test)
+    testImplementation(libs.h2)
     testImplementation(kotlin("test"))
 }
 java { toolchain { languageVersion = JavaLanguageVersion.of(22) } }

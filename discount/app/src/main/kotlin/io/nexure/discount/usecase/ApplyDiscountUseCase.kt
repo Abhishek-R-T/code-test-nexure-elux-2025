@@ -18,6 +18,11 @@ class ApplyDiscountUseCase(
             return ApplyDiscountResult.DiscountAlreadyApplied(product)
         }
 
+        val totalDiscount = product.discounts.sumOf { it.percent } + discount.percent
+        if (totalDiscount > 100.0) {
+            return ApplyDiscountResult.TotalDiscountExceeded
+        }
+
         val updatedProduct = productRepository.applyDiscount(productId, discount)
             ?: return ApplyDiscountResult.ProductNotFound
 
@@ -29,4 +34,5 @@ sealed class ApplyDiscountResult {
     data class Success(val product: Product) : ApplyDiscountResult()
     data class DiscountAlreadyApplied(val product: Product) : ApplyDiscountResult()
     data object ProductNotFound : ApplyDiscountResult()
+    data object TotalDiscountExceeded : ApplyDiscountResult()
 }

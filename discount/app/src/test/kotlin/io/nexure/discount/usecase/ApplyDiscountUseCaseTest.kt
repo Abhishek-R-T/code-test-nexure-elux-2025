@@ -67,4 +67,23 @@ class ApplyDiscountUseCaseTest {
         assertEquals(updatedProduct, result.product)
         coVerify { productRepository.applyDiscount("prod-1", discount) }
     }
+
+    @Test
+    fun `should return TotalDiscountExceeded when total discount exceeds 100 percent`() = runTest {
+        val product = Product(
+            id = "prod-1",
+            name = "Laptop",
+            basePrice = 1000.0,
+            country = Country("Sweden", 25.0),
+            discounts = listOf(Discount("summer-sale", 60.0))
+        )
+        val discount = Discount("loyalty", 50.0)
+
+        coEvery { productRepository.findById("prod-1") } returns product
+
+        val result = useCase.execute("prod-1", discount)
+
+        assertTrue(result is ApplyDiscountResult.TotalDiscountExceeded)
+        coVerify(exactly = 0) { productRepository.applyDiscount(any(), any()) }
+    }
 }

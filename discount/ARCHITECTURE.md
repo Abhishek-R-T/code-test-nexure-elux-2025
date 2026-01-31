@@ -242,7 +242,7 @@ Selected technologies:
 
 ## Testing Strategy
 
-Comprehensive unit tests without database dependencies:
+Comprehensive unit tests covering all layers:
 
 **Domain Services**
 - `PriceCalculatorTest` - Price calculations with VAT and discounts
@@ -251,11 +251,25 @@ Comprehensive unit tests without database dependencies:
 **Use Cases**
 - `ApplyDiscountUseCaseTest` - Discount application logic with mocked repository
 - `GetProductsByCountryUseCaseTest` - Product retrieval with country validation
-
-**Idempotency**
 - `DiscountIdempotencyTest` - Simulates concurrent requests to verify only one succeeds
 
-All tests use MockK for mocking, ensuring fast execution without external dependencies.
+**Infrastructure Persistence**
+- `ProductRepositoryImplTest` - Database operations with in-memory H2
+- `CountryRepositoryImplTest` - Country data access with in-memory H2
+- Tests verify idempotency, null handling, and data retrieval
+
+**Infrastructure Web**
+- `GetProductsRouteTest` - HTTP endpoint testing with mocked use cases
+- `ApplyDiscountRouteTest` - Discount endpoint with status code verification
+- `ExtensionsTest` - DTO mapping between domain and API models
+
+**Infrastructure Config**
+- `DependencyConfigTest` - Dependency injection wiring verification
+
+**Application**
+- `ApplicationTests` - Module configuration and API documentation endpoints
+
+All tests use MockK for mocking and H2 for in-memory database testing, ensuring fast execution without external dependencies.
 
 ## Configuration Management
 

@@ -43,6 +43,9 @@ fun Route.applyDiscountRoute(applyDiscountUseCase: ApplyDiscountUseCase) {
                 is ApplyDiscountResult.ProductNotFound -> {
                     call.respond(HttpStatusCode.NotFound, Error("Product not found"))
                 }
+                is ApplyDiscountResult.TotalDiscountExceeded -> {
+                    call.respond(HttpStatusCode.BadRequest, Error("Total discount cannot exceed 100%"))
+                }
             }
         } catch (e: IllegalArgumentException) {
             call.respond(HttpStatusCode.BadRequest, Error(e.message ?: "Invalid discount"))

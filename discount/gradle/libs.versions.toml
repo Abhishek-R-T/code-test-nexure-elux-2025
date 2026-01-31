@@ -7,6 +7,7 @@ testcontainers = "1.20.6"
 mockk = "1.13.17"
 exposed = "0.57.0"
 postgresql = "42.7.4"
+h2 = "2.2.224"
 hikaricp = "6.2.1"
 logback = "1.5.15"
 kotlin_serialization = "1.8.0"
@@ -31,6 +32,7 @@ exposed_core = { group = "org.jetbrains.exposed", name = "exposed-core", version
 exposed_dao = { group = "org.jetbrains.exposed", name = "exposed-dao", version.ref = "exposed" }
 exposed_jdbc = { group = "org.jetbrains.exposed", name = "exposed-jdbc", version.ref = "exposed" }
 postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
+h2 = { group = "com.h2database", name = "h2", version.ref = "h2" }
 hikaricp = { group = "com.zaxxer", name = "HikariCP", version.ref = "hikaricp" }
 logback_classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
 kotlinx_serialization_json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlin_serialization" }
