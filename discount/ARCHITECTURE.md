@@ -45,6 +45,114 @@ OpenAPI Generator auto-generates DTOs from the spec:
 - **Configuration Externalization** - All settings in `application.conf`
 - **Code Generation** - DTOs generated from OpenAPI spec to maintain consistency
 
+## Request Flow
+
+### Get Products by Country
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Route as GetProductsRoute
+    participant UseCase as GetProductsByCountryUseCase
+    participant CountryRepo as CountryRepository
+    participant ProductRepo as ProductRepository
+    participant PriceCalc as PriceCalculator
+
+    Client->>Route: GET /products?country=Sweden
+    Route->>UseCase: execute("Sweden")
+    UseCase->>CountryRepo: findByName("Sweden")
+    CountryRepo-->>UseCase: Country("Sweden", 25.0)
+    UseCase->>ProductRepo: findByCountry("Sweden")
+    ProductRepo-->>UseCase: List<Product>
+    UseCase->>PriceCalc: calculateFinalPrice(product, country)
+    PriceCalc-->>UseCase: finalPrice
+    UseCase-->>Route: Success(products)
+    Route-->>Client: 200 OK [ProductResponse]
+```
+
+### Apply Discount (First Time)
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Route as ApplyDiscountRoute
+    participant UseCase as ApplyDiscountUseCase
+    participant DiscountSvc as DiscountService
+    participant ProductRepo as ProductRepository
+    participant DB as PostgreSQL
+    participant PriceCalc as PriceCalculator
+
+    Client->>Route: PUT /products/prod-1/discount
+    Route->>UseCase: execute(productId, discount)
+    UseCase->>DiscountSvc: validateDiscount(discount)
+    DiscountSvc-->>UseCase: valid
+    UseCase->>ProductRepo: findById("prod-1")
+    ProductRepo-->>UseCase: Product
+    UseCase->>DiscountSvc: hasDiscount(product, discountId)
+    DiscountSvc-->>UseCase: false
+    UseCase->>ProductRepo: applyDiscount(productId, discount)
+    ProductRepo->>DB: INSERT INTO discounts
+    DB-->>ProductRepo: success
+    ProductRepo->>ProductRepo: fetchProduct(productId)
+    ProductRepo-->>UseCase: updated Product
+    UseCase->>PriceCalc: calculateFinalPrice(product, country)
+    PriceCalc-->>UseCase: finalPrice
+    UseCase-->>Route: Success(product)
+    Route-->>Client: 200 OK ProductResponse
+```
+
+### Apply Discount (Idempotent - Already Applied)
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Route as ApplyDiscountRoute
+    participant UseCase as ApplyDiscountUseCase
+    participant DiscountSvc as DiscountService
+    participant ProductRepo as ProductRepository
+
+    Client->>Route: PUT /products/prod-1/discount
+    Route->>UseCase: execute(productId, discount)
+    UseCase->>DiscountSvc: validateDiscount(discount)
+    DiscountSvc-->>UseCase: valid
+    UseCase->>ProductRepo: findById("prod-1")
+    ProductRepo-->>UseCase: Product
+    UseCase->>DiscountSvc: hasDiscount(product, discountId)
+    DiscountSvc-->>UseCase: true
+    UseCase-->>Route: AlreadyApplied
+    Route-->>Client: 304 Not Modified
+```
+
+### Concurrent Discount Application
+
+```mermaid
+sequenceDiagram
+    participant Client1
+    participant Client2
+    participant App1 as App Instance 1
+    participant App2 as App Instance 2
+    participant DB as PostgreSQL
+
+    par Concurrent Requests
+        Client1->>App1: PUT /products/prod-1/discount
+        Client2->>App2: PUT /products/prod-1/discount
+    end
+
+    par Database Operations
+        App1->>DB: INSERT (prod-1, discount-1)
+        App2->>DB: INSERT (prod-1, discount-1)
+    end
+
+    DB-->>App1: Success
+    DB-->>App2: PK Violation
+
+    App1->>DB: SELECT product with discounts
+    DB-->>App1: Product with discount
+    App1-->>Client1: 200 OK
+
+    App2-->>Client2: 304 Not Modified
+```
+
 ## Concurrency Solution
 
 ### The Challenge
@@ -161,3 +269,25 @@ database.user = "discount_user"  # Override with DB_USER
 database.password = "discount_pass"  # Override with DB_PASSWORD
 database.maxPoolSize = 10  # Override with DB_MAX_POOL_SIZE
 ```
+
+## Build and Deployment
+
+The build process generates code and creates a fat JAR:
+
+```bash
+./gradlew openApiGenerate  # Generate models from spec
+./gradlew build  # Includes code generation
+docker-compose up --build  # Build and run in Docker
+```
+
+The Dockerfile creates a self-contained fat JAR with all dependencies for easy deployment.
+
+## Scalability Considerations
+
+The service is designed to scale horizontally:
+
+1. **Stateless Design** - No session state, instances are independent
+2. **Connection Pooling** - HikariCP efficiently manages database connections
+3. **Async I/O** - Ktor's coroutines handle high concurrency
+4. **Database-Level Idempotency** - Works across multiple instances
+5. **Composite Primary Key** - Fast lookups and constraint enforcement
