@@ -18,8 +18,8 @@ paths:
           required: true
           schema:
             type: string
-            enum: [Sweden, Germany, France]
-          description: Country name to filter products
+            example: Sweden
+          description: Country name to filter products (e.g Sweden, Germany, France)
       responses:
         '200':
           description: List of products with final prices
@@ -99,7 +99,6 @@ components:
           description: Base price before tax and discount
         country:
           type: string
-          enum: [Sweden, Germany, France]
           description: Country name
         discounts:
           type: array
